@@ -13,7 +13,8 @@ module LaRake
                 ['pdflatex', @opt_main.gsub("#{@opt_src_dir}#{File::SEPARATOR}","")].run
                 ['pdflatex', @opt_main.gsub("#{@opt_src_dir}#{File::SEPARATOR}","")].run
             end
-        end
 
+            Product.new(Hash[*Dir.glob("#{job_srcs}/**/*.pdf").map{|entry| [entry, File.filename(entry)]}.flatten])
+        end
     end
 end
