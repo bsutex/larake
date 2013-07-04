@@ -7,13 +7,20 @@ module Rake
 
         def execute(args=nil)
             log(self.name, :task)
-            FileUtils.mkdir_p(File.join(LaRake.tmp_dir, self.name))
-            old_execute
+            begin
+                old_execute
+            rescue Exception => e
+                log("Build failed @ #{self.name}", :error)
+                raise e
+            end
+        end
+
+        def task_dir
+            File.join(LaRake.tmp_dir, self.name)
         end
 
         def method_missing(meth, *args, &block)
             clazz = Kernel.const_get(meth.capitalize)
-            puts :L
             if clazz < LaRake::Job then
                 ## Вообще, мне очень хочется передать туда и блок
                 # но пока в этом необходимости нет, так что не будем
