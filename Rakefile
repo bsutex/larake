@@ -15,8 +15,7 @@ task :view_pdf => :pdf do |t|
 end
 
 task :pdf => [ :images ] do |t|
-#    t.pdflatex('src/main.tex').export
-p t.name
+    t.pdflatex('src/main.tex', :with_toc => true)
 end
 
 task :images do |t|
