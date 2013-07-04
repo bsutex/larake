@@ -1,6 +1,9 @@
-
-
 module LaRake
+
+    def self.tmp_dir
+        ".larake"
+    end
+
     @@log_types =
     {
         :info => [:white, :bold],

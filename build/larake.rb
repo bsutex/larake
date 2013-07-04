@@ -1,3 +1,5 @@
+require 'fileutils'
+
 require 'larake/lib/colored'
 
 require 'larake/core/core'
