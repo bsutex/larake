@@ -20,11 +20,16 @@ module LaRake
             wrap build
         end
 
-        private
-
         def job_dir
             File.join(@task.task_dir, "#{self.class.name.split(":").last.downcase}")
         end
+
+        def job_srcs
+            File.join(job_dir, 'srcs')
+        end
+
+        private
+
 
         def copy_srcs(job_dir)
             FileUtils.mkdir_p(job_dir)
@@ -37,7 +42,6 @@ module LaRake
         end
 
         def copy_field(field)
-            puts field
             if field.is_a? Array then
                 field.each do |item|
                     copy_each item
@@ -48,11 +52,9 @@ module LaRake
         end
 
         def copy_each item
-            to = File.join(job_dir, "srcs", File.dirname(item))
+            to = File.join(job_srcs, File.dirname(item))
             FileUtils.mkdir_p(to)
-
             from = File.expand_path(item)
-
             FileUtils.cp_r(from, to)
         end
 
