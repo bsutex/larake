@@ -71,7 +71,7 @@ module LaRake
         end
 
         def wrap result
-
+            result
         end
     end
 end
