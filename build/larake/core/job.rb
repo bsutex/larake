@@ -1,6 +1,5 @@
 module LaRake
     class Job
-
         def self.checksum(files)
             content = files.map{|f| File.read(f)}.join
             MD5.md5(content).to_s
@@ -20,47 +19,50 @@ module LaRake
             wrap build
         end
 
-        def job_dir
-            File.join(@task.task_dir, "#{self.class.name.split(":").last.downcase}")
+        def job_dir subdir = ""
+            File.join(@task.task_dir, "#{self.class.name.split(":").last.downcase}", subdir)
         end
 
         def job_srcs
-            File.join(job_dir, 'srcs')
+            job_dir("srcs")
+        end
+
+        def job_out
+            job_dir("out")
         end
 
         private
-
-
         def copy_srcs(job_dir)
             FileUtils.mkdir_p(job_dir)
 
             instance_variables.each do |var|
-                if opt_or_src? var then
+                if src? var then                    
                     copy_field(eval %{#{var}})
                 end
             end
         end
 
         def copy_field(field)
+            p field
             if field.is_a? Array then
                 field.each do |item|
-                    copy_each item
+                    copy item
                 end
             else
-                copy_each field
+                copy field
             end
         end
 
-        def copy_each item
+        def copy item
             to = File.join(job_srcs, File.dirname(item))
             FileUtils.mkdir_p(to)
             from = File.expand_path(item)
             FileUtils.cp_r(from, to)
         end
 
-        def opt_or_src? method
+        def src? method
             method = method.to_s
-            ["@opt_", "@src_", "@srcs_"].map{|prefx| method.start_with?(prefx) || method.start_with?(prefx.gsub("_",'')) }.inject(false){|res, elem| res || elem}
+            ["@src_", "@srcs_"].map{|prefx| method.start_with?(prefx) || method.start_with?(prefx.gsub("_",'')) }.inject(false){|res, elem| res || elem}
         end
 
         def digest
