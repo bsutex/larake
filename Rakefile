@@ -14,7 +14,7 @@ task :view_pdf => :pdf do |t|
 end
 
 task :pdf => [ :images ] do |t|
-    t.pdflatex('src', :main => 'main.tex', :deps => [  ] )
+    t.pdflatex('src', :main => 'main.tex', :deps => ['style'], :flags => [:halt_on_err]).export('out')
 end
 
 task :images do |t|

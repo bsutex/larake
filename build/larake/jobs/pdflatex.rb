@@ -27,7 +27,7 @@ module LaRake
         def setup src_dir, opts = {}            
             @srcs = Dir.glob("#{src_dir}/**/*{.tex,.sty,.bib}")
             @srcs_deps = opts.delete(:deps) || []
-            @opts_flags = [] || opts.delete[:flags]
+            @opts_flags = opts.delete(:flags) || []
             raise("Unknown flags : #{flags.inspect}") unless check_flags @opts_flags
             @opt_main = File.join(src_dir, opts.delete(:main) || raise("No main file. Don't know what to do"))
 
@@ -63,7 +63,7 @@ module LaRake
         end
     
         def make_flags flags
-            flags.map{|flag| @@flag_mappings[flag]}.join(" ")
+            flags.map{|flag| @@flag_mapping[flag]}.join(" ")
         end
 
         def make_opts opts
@@ -77,7 +77,8 @@ module LaRake
 
         def latex_pretty line
             ## Ну здесь еще можно много чего наворотить
-            print ["\t", line].join.gsub(/[Ww]arning/){|m| m.yellow.bold}.gsub("LaTeX"){|m| m.white.bold}
+            print ["\t", line].join.gsub(/[Ww]arning/){|m| m.yellow.bold}.gsub("LaTeX"){|m| m.white.bold}.
+                gsub(/(Fatal)|(error)/){|m| m.red.bold}
         end
     end
 end
