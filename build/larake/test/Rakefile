@@ -1,0 +1,16 @@
+$: << "#{File.dirname(__FILE__)}/../../"
+
+require 'larake'
+
+include LaRake
+
+task :default => :test_all
+
+task :test_all => [ :test_dummy, :test_run ]
+
+task :test_dummy do |t|
+end
+
+task :test_run do |t|
+	["ls"].run{|l| log l}
+end

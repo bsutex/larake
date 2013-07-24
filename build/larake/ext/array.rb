@@ -11,6 +11,8 @@ class Array
 			    rescue Errno::EIO
 			      ## Errno:EIO error, but this probably just means 
 			      ##      that the process has finished giving output
+			      Process.wait(pid)
+			      raise("Error on \'#{cmd}\'") unless $?.exitstatus == 0
 			    end
 			  end
     	end
