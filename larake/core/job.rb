@@ -36,14 +36,13 @@ module LaRake
       FileUtils.mkdir_p(job_dir)
 
       instance_variables.each do |var|
-        if src? var then          
+        if src? var then
           copy_field(eval %{#{var}})
         end
       end
     end
 
     def copy_field(field)
-      p field
       if field.is_a? Array then
         field.each do |item|
           copy item
@@ -54,7 +53,7 @@ module LaRake
     end
 
     def copy(item)
-      to = File.join(job_srcs, File.dirname(item))
+      to = File.join(job_srcs, File.basename(item))
       FileUtils.mkdir_p(to)
       from = File.expand_path(item)
       FileUtils.cp_r(from, to)

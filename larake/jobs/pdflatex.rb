@@ -13,7 +13,9 @@ module LaRake
       # Exit with an error code when an error is encountered during processing.
       :halt_on_err => '-halt-on-error',
       # Enable the filename recorder. This leaves a trace of the files opened for input and output in a file with extension .fls.
-      :recorder => '-recorder'
+      :recorder => '-recorder',
+      # Print file:line:error style messages.
+      :file_line_error => '-file-line-error'
     }
 
     @@opt_mapping =
@@ -23,9 +25,7 @@ module LaRake
       # Set the output format mode, where format must be either pdf or dvi. This also influences the set of graphics formats understood by pdfTeX.
       :output_fmt => '-output-format',
       # directory instead of the current directory. Look up input files in directory first, the along the normal search path.
-      :output_directory => '-output-directory',
-      # Prepend DIR to the input search path.
-      :include_dir => '-include-directory'
+      :output_directory => '-output-directory'
     }
     def setup src_dir, opts = {}
 
@@ -35,13 +35,16 @@ module LaRake
       @srcs_deps = opts.delete(:deps) || []
       @opts_flags = opts.delete(:flags) || []
 
-      raise("Unknown flags : #{flags.inspect}") unless check_flags @opts_flags
+      raise("Unknown flags : #{@flags.inspect}") unless check_flags @opts_flags
       @opt_main = File.join(src_dir, opts.delete(:main) || raise("No main file. Don't know what to do"))
 
       @opts = {}
-      @opts[:jobname] = opts.delete(:jobname) || File.basename(@opt_main)
+      @opts[:jobname] = opts.delete(:jobname) || File.basename(@opt_main, '.tex')
       @opts[:output_fmt] = opts.delete(:output_fmt) || 'pdf'
       @opts[:output_directory] = File.absolute_path(File.join(job_out, opts.delete(:output_directory) || ''))
+
+      opts.select{|k, v| @@opt_mapping.keys.include?(k)}.each{|k, v| @opts[k] = v}
+      opts.delete_if{|k, v| @@opt_mapping.keys.include?(k)}
 
       @opt_src_dir = src_dir
 
@@ -55,6 +58,11 @@ module LaRake
     def build
       FileUtils.mkdir_p(@opts[:output_directory])
       Dir.glob("#{job_srcs}/**/**").select{|entry| File.directory?(entry)}.map{|entry| entry.gsub(File.join(job_srcs, @opt_src_dir), job_out)}.each{|dir| FileUtils.mkdir_p(dir)}
+
+      # Грязный костыль, нужно сделать нормльно
+      Dir.chdir(job_srcs) do
+        (Dir.glob("**") - [@opt_src_dir]).each{|d| p "#{d} => #{File.join(@opt_src_dir, d)}"; FileUtils.mv(d, File.join(@opt_src_dir, d), force: true)}
+      end
 
       Dir.chdir(File.join(job_srcs, @opt_src_dir)) do
         # Пока собираем все два раза. Надо будет узнать как определять все ли мы собрали
@@ -76,7 +84,7 @@ module LaRake
     def make_opts opts
       str = []
       opts.each do |k, v|
-        str << [@@opt_mapping[k], v].join("=")
+        str << [@@opt_mapping[k], v]
       end
 
       str.join(" ")
