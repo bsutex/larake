@@ -1,5 +1,5 @@
 module LaRake
-  class Pdflatex < Job    
+  class Pdflatex < Job
 
     @@flag_mapping = {
       # Sets \pdfdraftmode so pdfTeX doesn't write a PDF and doesn't read any included images, thus speeding up execution.
@@ -23,11 +23,13 @@ module LaRake
       # Set the output format mode, where format must be either pdf or dvi. This also influences the set of graphics formats understood by pdfTeX.
       :output_fmt => '-output-format',
       # directory instead of the current directory. Look up input files in directory first, the along the normal search path.
-      :output_directory => '-output-directory'
+      :output_directory => '-output-directory',
+      # Prepend DIR to the input search path.
+      :include_dir => '-include-directory'
     }
-    def setup src_dir, opts = {}   
-      
-      @filter = LaTeXOutputFilter.new     
+    def setup src_dir, opts = {}
+
+      @filter = LaTeXOutputFilter.new
 
       @srcs = Dir.glob("#{src_dir}/**/*{.tex,.sty,.bib}")
       @srcs_deps = opts.delete(:deps) || []
@@ -42,7 +44,7 @@ module LaRake
       @opts[:output_directory] = File.absolute_path(File.join(job_out, opts.delete(:output_directory) || ''))
 
       @opt_src_dir = src_dir
-      
+
       raise("Unknown options : #{opts.inspect}") unless opts.empty?
     end
 
@@ -50,14 +52,14 @@ module LaRake
       flags.select{|flag| !(@@flag_mapping.has_key?(flag))}.empty?
     end
 
-    def build      
+    def build
       FileUtils.mkdir_p(@opts[:output_directory])
       Dir.glob("#{job_srcs}/**/**").select{|entry| File.directory?(entry)}.map{|entry| entry.gsub(File.join(job_srcs, @opt_src_dir), job_out)}.each{|dir| FileUtils.mkdir_p(dir)}
 
       Dir.chdir(File.join(job_srcs, @opt_src_dir)) do
         # Пока собираем все два раза. Надо будет узнать как определять все ли мы собрали
         ['pdflatex', make_args(@opts_flags, @opts) ,@opt_main.gsub("#{@opt_src_dir}#{File::SEPARATOR}","")].run{|out| latex_pretty out}
-        ['pdflatex', make_args(@opts_flags, @opts) ,@opt_main.gsub("#{@opt_src_dir}#{File::SEPARATOR}","")].run{|out| latex_pretty out}        
+        ['pdflatex', make_args(@opts_flags, @opts) ,@opt_main.gsub("#{@opt_src_dir}#{File::SEPARATOR}","")].run{|out| latex_pretty out}
       end
 
       Product.new(Hash[*Dir.glob("#{job_out}/**/*.pdf").map{|entry| [entry, File.basename(entry)]}.flatten])
@@ -66,7 +68,7 @@ module LaRake
     def make_args flags, opts
       [make_flags(flags), make_opts(opts)].join(" ")
     end
-  
+
     def make_flags flags
       flags.map{|flag| @@flag_mapping[flag]}.join(" ")
     end
@@ -74,7 +76,7 @@ module LaRake
     def make_opts opts
       str = []
       opts.each do |k, v|
-        str << [@@opt_mapping[k], v]
+        str << [@@opt_mapping[k], v].join("=")
       end
 
       str.join(" ")
@@ -84,7 +86,7 @@ module LaRake
       line = line.encode("US-ASCII",:invalid => :replace)
       ## Ну здесь еще можно много чего наворотить
       out = ["\t", @filter.proc_line(line)].
-        join.        
+        join.
         gsub(/[Ww]arning/){|m| m.yellow.bold}.
         gsub("LaTeX"){|m| m.white.bold}.
         gsub(/(Fatal)|(error)/){|m| m.red.bold}.
